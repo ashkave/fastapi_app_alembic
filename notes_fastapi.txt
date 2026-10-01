@@ -1880,3 +1880,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Deploying on heroku
+
+https://devcenter.heroku.com/articles/getting-started-with-python
+
+
+https://dashboard.heroku.com/apps/fastapi-anilkavety
