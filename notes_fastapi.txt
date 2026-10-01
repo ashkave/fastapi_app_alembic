@@ -1888,3 +1888,33 @@ https://devcenter.heroku.com/articles/getting-started-with-python
 
 
 https://dashboard.heroku.com/apps/fastapi-anilkavety
+
+
+heroku addons:create heroku-postgresql:Eco Dynos Plan -a 
+
+heroku addons:create heroku-postgresql:essential-0 -a fastapi-anilkavety
+
+
+(venv) C:\Users\akavety\Desktop\codefiles_ashish\codefiles_fastapi>heroku addons:create heroku-postgresql:essential-0 -a fastapi-anilkavety
+Creating heroku-postgresql:essential-0 on ⬢ fastapi-anilkavety... ~$0.007/hour (max $5/month)
+Database should be available soon
+postgresql-vertical-83488 is being created in the background. The app will restart when complete...
+Run heroku addons:info postgresql-vertical-83488 to check creation progress.
+Run heroku addons:docs heroku-postgresql to view documentation.
+
+
+User
+up1bnr65844vj
+Password
+
+Hide
+Host
+c771qmboeg94is.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com
+Database
+d59jjvkerri74p
+Port
+5432
+
+postgres://up1bnr65844vj:password@c771qmboeg94is.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d59jjvkerri74p
+
+heroku pg:psql postgresql-vertical-83488 --app fastapi-anilkavety
