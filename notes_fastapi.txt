@@ -1884,6 +1884,26 @@ app.add_middleware(
 
 # Deploying on heroku
 
+Summary
+The page explains how to deploy a FastAPI application with PostgreSQL to Heroku, then troubleshoot and update it. KodeKloud
+Main steps
+1. Install the Heroku CLI, log in with heroku login, and create an app using heroku create.
+2. Add a Procfile in the project root to tell Heroku how to start FastAPI:web: uvicorn app.main:app --host=0.0.0.0 --port=${PORT:-5000}
+   
+   Here, app.main:app identifies the FastAPI application. Use Heroku’s assigned port and omit development’s --reload.
+3. Commit and deploy using git push heroku main; enable a web dyno with heroku ps:scale web=1.
+4. Configure environment variables through Heroku Config Vars. Your local .env is not automatically uploaded.
+5. Provision PostgreSQL and configure the application’s database connection.
+6. Create the production database tables by running:heroku run "alembic upgrade head"
+7. Verify the deployment through /docs and API requests. Diagnose failures with heroku logs --tail.
+For later updates, commit changes, push to Heroku, and apply any new migrations. KodeKloud
+Dated guidance to watch for
+- The free hobby-dev PostgreSQL plan is unavailable. Heroku discontinued free dynos and databases on November 28, 2022. devcenter.heroku.com
+- The settings example uses Pydantic v1. In Pydantic v2, import BaseSettings from pydantic_settings.
+
+https://notes.kodekloud.com/docs/Python-API-Development-with-FastAPI/Deployment/Deploy-Heroku/page
+
+
 https://devcenter.heroku.com/articles/getting-started-with-python
 
 
@@ -1918,3 +1938,104 @@ Port
 postgres://up1bnr65844vj:password@c771qmboeg94is.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d59jjvkerri74p
 
 heroku pg:psql postgresql-vertical-83488 --app fastapi-anilkavety
+
+
+(venv) C:\Users\akavety\Desktop\codefiles_ashish\codefiles_fastapi>heroku run "alembic upgrade head"
+Running alembic upgrade head on ⬢ fastapi-anilkavety... up, run.4154
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> b0a6adda9326, create posts table
+INFO  [alembic.runtime.migration] Running upgrade b0a6adda9326 -> 94fcbf56fdad, add content column to posts table
+INFO  [alembic.runtime.migration] Running upgrade 94fcbf56fdad -> 7faff9b8d4c7, create users table
+INFO  [alembic.runtime.migration] Running upgrade 7faff9b8d4c7 -> d06b7a4c29a9, add foreign key to posts table
+INFO  [alembic.runtime.migration] Running upgrade d06b7a4c29a9 -> 33c5df4585fb, adding additional columns to posts_alembic table
+INFO  [alembic.runtime.migration] Running upgrade 33c5df4585fb -> e8508ad90ea8, add votes table
+
+
+
+# deploying on ubuntu server
+
+https://notes.kodekloud.com/docs/Python-API-Development-with-FastAPI/Deployment/Deploy-Ubuntu-VM/page
+
+-- deploying on oci ubuntu server
+
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3-pip
+sudo pip3 install virtualenv
+sudo apt install postgresql postgresql-contrib -y
+pg_ctlcluster 12 main start
+su - postgres
+psql -U postgres
+
+Next, modify the PostgreSQL configuration files located in /etc/postgresql/12/main:
+In pg_hba.conf, change:
+local   all             postgres        peer
+to:
+local   all             postgres        md5
+To enable remote connections (if needed), edit postgresql.conf and set:
+listen_addresses = '*'
+Now, restart PostgreSQL:
+sudo systemctl restart postgresql
+Test the connection:
+psql -U postgres
+You should now be prompted for the password.
+
+create user
+
+adduser ashish
+Follow the prompts to set a password and enter the user details. Next, add this user to the sudo group:
+usermod -aG sudo ashish
+
+
+
+    3  mkdir app
+    4  cd app
+    5  mkdir src
+    6  pwd
+    7  python3 -m venv venv
+    8  ls
+    9  source venv/bin/activate
+   10  cd src
+   11  git clone https://github.com/ashkave/fastapi_app_alembic.git
+   12  ls
+   13  rm -rf fastapi_app_alembic/
+   14  git clone https://github.com/ashkave/fastapi_app_alembic.git .
+   15  ls
+   16  vi requirements.txt
+   17  pip install -r requirements.txt
+   
+   ubuntu@test-ashish:~$ nc -zv 130.210.23.125 5432
+Connection to 130.210.23.125 5432 port [tcp/postgresql] succeeded!
+
+
+ubuntu@test-ashish:~$ sudo iptables -I INPUT 1 -p tcp --dport 5432 -j ACCEPT
+
+sudo iptables -I INPUT 1 -p tcp --dport 8000 -j ACCEPT
+
+
+(venv) ashish@test-ashish:~/app/src$ uvicorn app_orm_alembic.main:app --host 0.0.0.0
+INFO:     Started server process [17498]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+
+
+
+(venv) ashish@test-ashish:~/app/src$ gunicorn -w 2 -k uvicorn.workers.UvicornWorker app_orm_alembic.main:app --bind 0.0.0.0:8000
+[2026-10-02 14:32:34 +0000] [17639] [INFO] Starting gunicorn 26.2.0
+[2026-10-02 14:32:34 +0000] [17639] [INFO] Listening at: http://0.0.0.0:8000 (17639)
+[2026-10-02 14:32:34 +0000] [17639] [INFO] Using worker: uvicorn.workers.UvicornWorker
+[2026-10-02 14:32:34 +0000] [17640] [INFO] Booting worker with pid: 17640
+[2026-10-02 14:32:34 +0000] [17641] [INFO] Booting worker with pid: 17641
+[2026-10-02 14:32:34 +0000] [17639] [INFO] Control socket listening at /home/ashish/.gunicorn/gunicorn.ctl
+[2026-10-02 14:32:35 +0000] [17640] [INFO] Started server process [17640]
+[2026-10-02 14:32:35 +0000] [17640] [INFO] Waiting for application startup.
+[2026-10-02 14:32:35 +0000] [17640] [INFO] Application startup complete.
+[2026-10-02 14:32:35 +0000] [17641] [INFO] Started server process [17641]
+[2026-10-02 14:32:35 +0000] [17641] [INFO] Waiting for application startup.
+[2026-10-02 14:32:35 +0000] [17641] [INFO] Application startup complete.
+
+http://130.210.23.125:8000/docs
+
+
+
